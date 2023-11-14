@@ -65,30 +65,27 @@ public class MascotaController : BaseController
         return CreatedAtAction(nameof(Post), new { id = mascotaDto.Id }, mascotaDto);
     }
 
-    [HttpPut("{id}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<MascotaDto>> Put(int id, [FromBody] MascotaDto mascotaDto)
+    public async Task<ActionResult<MascotaDto>> Put(int id, [FromBody] MascotaDto resultDto)
     {
-        if (mascotaDto.Id == 0)
-        {
-            mascotaDto.Id = id;
-        }
-        if (mascotaDto.Id != id)
+        var exists = await _unitOfWork.Mascotas.GetByIdAsync(id);
+        if (exists == null)
         {
             return NotFound();
         }
-        var mascota = _mapper.Map<Mascota>(mascotaDto);
-        if (mascotaDto.FechaNacimientoMascota == DateOnly.MinValue)
+        if (resultDto.Id == 0)
         {
-            mascotaDto.FechaNacimientoMascota = DateOnly.FromDateTime(DateTime.Now);
-            mascota.FechaNacimientoMascota = DateOnly.FromDateTime(DateTime.Now);
+            resultDto.Id = id;
         }
-        mascotaDto.Id = mascota.Id;
-        _unitOfWork.Mascotas.Update(mascota);
+        if (resultDto.Id != id)
+        {
+            return BadRequest();
+        }
+        // Update the properties of the existing entity with values from resultDto
+        _mapper.Map(resultDto, exists);
+        // The context is already tracking result, so no need to attach it
         await _unitOfWork.SaveAsync();
-        return mascotaDto;
+        // Return the updated entity
+        return _mapper.Map<MascotaDto>(exists);
     }
 
     [HttpDelete("{id}")]
