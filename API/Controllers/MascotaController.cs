@@ -82,6 +82,10 @@ public class MascotaController : BaseController
         }
         // Update the properties of the existing entity with values from resultDto
         _mapper.Map(resultDto, exists);
+        if (resultDto.FechaNacimientoMascota == DateOnly.MinValue)
+        {
+            exists.FechaNacimientoMascota = DateOnly.FromDateTime(DateTime.Now);
+        }
         // The context is already tracking result, so no need to attach it
         await _unitOfWork.SaveAsync();
         // Return the updated entity
